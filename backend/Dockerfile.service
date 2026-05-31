@@ -1,0 +1,59 @@
+# =====================================================================
+
+# AAFT LMS — Shared service Dockerfile.
+#
+# Used by every Node.js microservice. The `SERVICE_NAME` build-arg selects
+# which workspace under `services/` to compile and run.
+
+# =====================================================================
+
+ARG SERVICE_NAME=auth-service
+
+# ---------- builder ----------
+FROM node:20-alpine AS builder
+ARG SERVICE_NAME
+
+WORKDIR /app
+
+# Install build deps (Prisma needs openssl)
+RUN apk add --no-cache openssl libc6-compat
+
+# Copy manifests first (better layer caching)
+COPY package.json package-lock.json* tsconfig.base.json ./
+COPY packages/db-lib/package.json ./packages/db-lib/
+COPY packages/common-lib/package.json ./packages/common-lib/
+COPY services/${SERVICE_NAME}/package.json ./services/${SERVICE_NAME}/
+
+# Install everything (workspaces resolve via local symlinks)
+RUN npm install --workspaces --include-workspace-root --no-audit --no-fund
+
+# Copy source code
+COPY packages ./packages
+COPY services/${SERVICE_NAME} ./services/${SERVICE_NAME}
+
+# Generate Prisma client + build shared packages + target service
+RUN npm run prisma:generate -w @aaft/db-lib \
+ && npm run build -w @aaft/db-lib \
+ && npm run build -w @aaft/common-lib \
+ && npm run build -w @aaft/${SERVICE_NAME}
+
+# ---------- runtime ----------
+FROM node:20-alpine
+ARG SERVICE_NAME
+
+ENV NODE_ENV=production
+WORKDIR /app
+
+RUN apk add --no-cache openssl libc6-compat tini
+
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/services/${SERVICE_NAME} ./services/${SERVICE_NAME}
+
+# Run with tini so signals propagate to node
+ENV SERVICE_NAME=${SERVICE_NAME}
+WORKDIR /app/services/${SERVICE_NAME}
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "dist/index.js"]

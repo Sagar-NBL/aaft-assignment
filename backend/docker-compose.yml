@@ -1,0 +1,203 @@
+# =====================================================================
+# AAFT LMS Backend — docker-compose
+#
+#   - postgres            (5432 → host)
+#   - redis               (6379 → host, optional cache)
+#   - migrate             (runs once: prisma migrate deploy + seed)
+#   - auth-service        (4001, internal only)
+#   - admin-service       (4002, internal only)
+#   - instructor-service  (4003, internal only)
+#   - student-service     (4004, internal only)
+#   - public-service      (4005, internal only)
+#   - gateway             (3001 → host) ← sole ingress for the frontend
+#
+# Start:  docker-compose up -d
+# Logs :  docker-compose logs -f gateway
+# =====================================================================
+
+x-service-common: &service-common
+  restart: unless-stopped
+  env_file:
+    - .env
+  networks:
+    - aaft-net
+  depends_on:
+    postgres:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  # ---------------------------------------------------------------------
+  # PostgreSQL — single shared database
+  # ---------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: aaft-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - aaft-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------
+  # Redis — optional cache + rate-limit store
+  # ---------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: aaft-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - aaft-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------
+  # Migrations + seed (one-shot)
+  # ---------------------------------------------------------------------
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    container_name: aaft-migrate
+    env_file:
+      - .env
+    networks:
+      - aaft-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ---------------------------------------------------------------------
+  # auth-service  (/api/auth/*)
+  # ---------------------------------------------------------------------
+  auth-service:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: auth-service
+    container_name: aaft-auth-service
+    environment:
+      PORT: ${AUTH_SERVICE_PORT}
+    expose:
+      - "${AUTH_SERVICE_PORT}"
+
+  # ---------------------------------------------------------------------
+  # admin-service  (/api/admin/*)
+  # ---------------------------------------------------------------------
+  admin-service:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: admin-service
+    container_name: aaft-admin-service
+    environment:
+      PORT: ${ADMIN_SERVICE_PORT}
+    expose:
+      - "${ADMIN_SERVICE_PORT}"
+
+  # ---------------------------------------------------------------------
+  # instructor-service  (/api/instructor/*)
+  # ---------------------------------------------------------------------
+  instructor-service:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: instructor-service
+    container_name: aaft-instructor-service
+    environment:
+      PORT: ${INSTRUCTOR_SERVICE_PORT}
+    expose:
+      - "${INSTRUCTOR_SERVICE_PORT}"
+
+  # ---------------------------------------------------------------------
+  # student-service  (/api/student/*)
+  # ---------------------------------------------------------------------
+  student-service:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: student-service
+    container_name: aaft-student-service
+    environment:
+      PORT: ${STUDENT_SERVICE_PORT}
+    expose:
+      - "${STUDENT_SERVICE_PORT}"
+
+  # ---------------------------------------------------------------------
+  # public-service  (/api/certificates/:code — public verify)
+  # ---------------------------------------------------------------------
+  public-service:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: public-service
+    container_name: aaft-public-service
+    environment:
+      PORT: ${PUBLIC_SERVICE_PORT}
+    expose:
+      - "${PUBLIC_SERVICE_PORT}"
+
+  # ---------------------------------------------------------------------
+  # gateway — single Nginx + Lua entry point
+  # ---------------------------------------------------------------------
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: aaft-gateway
+    restart: unless-stopped
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    ports:
+      - "${GATEWAY_PORT:-3001}:80"
+    networks:
+      - aaft-net
+    depends_on:
+      - auth-service
+      - admin-service
+      - instructor-service
+      - student-service
+      - public-service
+
+# ---------------------------------------------------------------------
+# Networking + volumes
+# ---------------------------------------------------------------------
+networks:
+  aaft-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:

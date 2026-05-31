@@ -1,0 +1,36 @@
+# =====================================================================
+# AAFT LMS — Schema sync + Seed runner.
+# Runs `prisma db push` (creates/syncs tables from schema.prisma) then
+# `tsx src/seed.ts`. Exits when done. Started by docker-compose with restart=no.
+#
+# We use `db push` instead of `migrate deploy` because the repository ships
+# without a baseline migrations folder — this lets a fresh clone boot with a
+# single `docker-compose up` without first running `prisma migrate dev` locally.
+# For production, generate migrations via `prisma migrate dev --name init`
+# and switch this command back to `prisma migrate deploy`.
+# =====================================================================
+FROM node:20-alpine
+
+WORKDIR /app
+RUN apk add --no-cache openssl libc6-compat
+
+COPY package.json package-lock.json* tsconfig.base.json ./
+COPY packages/db-lib/package.json ./packages/db-lib/
+COPY packages/common-lib/package.json ./packages/common-lib/
+
+RUN npm install --workspaces --include-workspace-root --no-audit --no-fund
+
+COPY packages ./packages
+
+RUN npm run prisma:generate -w @aaft/db-lib \
+ && npm run build -w @aaft/db-lib \
+ && npm run build -w @aaft/common-lib
+
+WORKDIR /app/packages/db-lib
+
+# Push the Prisma schema, then run the seed.
+CMD ["sh", "-c", "echo 'Pushing Prisma schema to database...' \
+  && npx prisma db push --accept-data-loss --skip-generate \
+  && echo 'Schema synced. Running seed...' \
+  && npx tsx src/seed.ts \
+  && echo 'Migrate container exiting cleanly.'"]

@@ -1,0 +1,25 @@
+{
+  "name": "@aaft/instructor-service",
+  "version": "1.0.0",
+  "description": "AAFT LMS — Instructor service (/api/instructor/*). Sections, subsections, units, quizzes, questions, learner progress.",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@aaft/common-lib": "*",
+    "@aaft/db-lib": "*",
+    "express": "^4.18.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
