@@ -1,0 +1,16 @@
+{
+  "name": "AAFT Mini LMS",
+  "short_name": "AAFT LMS",
+  "description": "Premium learning management for AAFT Creative Academy",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A2540",
+  "theme_color": "#0A2540",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

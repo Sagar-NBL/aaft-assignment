@@ -1,0 +1,812 @@
+{
+  "info": {
+    "name": "AAFT LMS Backend",
+    "description": "Complete API collection for the AAFT LMS backend.\n\n## Setup\n1. Import this collection in Postman\n2. The collection has variables — see the 'Variables' tab\n3. Run requests in this order:\n   - **Auth → Login (Admin)** first → token gets auto-saved\n   - Then any Admin endpoint\n   - For student endpoints: run **Auth → Login (Student)** first\n   - For instructor: **Auth → Login (Instructor)** first\n\n## Demo Accounts\n- admin@aaft.com / Admin@123\n- instructor@aaft.com / Instructor@123\n- student@aaft.com / Student@123",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001/api", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "courseId", "value": "", "type": "string" },
+    { "key": "studentId", "value": "", "type": "string" },
+    { "key": "lessonId", "value": "", "type": "string" },
+    { "key": "enrollmentId", "value": "", "type": "string" },
+    { "key": "courseRunId", "value": "", "type": "string" },
+    { "key": "quizId", "value": "", "type": "string" },
+    { "key": "certificateCode", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('✓ Admin token saved');",
+                  "}",
+                  "if (json.user) {",
+                  "    pm.collectionVariables.set('userId', json.user.id);",
+                  "}",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Has token + user', () => {",
+                  "    pm.expect(json).to.have.property('token');",
+                  "    pm.expect(json).to.have.property('user');",
+                  "    pm.expect(json.user.role).to.eql('admin');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@aaft.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.collectionVariables.set('userId', json.user.id);",
+                  "    console.log('✓ Student token saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@aaft.com\",\n  \"password\": \"Student@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (Instructor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.collectionVariables.set('userId', json.user.id);",
+                  "    console.log('✓ Instructor token saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"instructor@aaft.com\",\n  \"password\": \"Instructor@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register (Part B)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.user@example.com\",\n  \"password\": \"NewUser@123\",\n  \"name\": \"New User\",\n  \"role\": \"student\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh (Part B)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout (Part B)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Students",
+      "item": [
+        {
+          "name": "List students (paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length > 0) {",
+                  "    pm.collectionVariables.set('studentId', json.items[0].id);",
+                  "    console.log('✓ studentId saved:', json.items[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/students?page=1&limit=10&sort=name",
+              "host": ["{{baseUrl}}"], "path": ["admin", "students"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort", "value": "name" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get student by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/students/{{studentId}}", "host": ["{{baseUrl}}"], "path": ["admin", "students", "{{studentId}}"] }
+          }
+        },
+        {
+          "name": "Create student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/students", "host": ["{{baseUrl}}"], "path": ["admin", "students"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ravi Kumar\",\n  \"email\": \"ravi.kumar@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update student",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/students/{{studentId}}", "host": ["{{baseUrl}}"], "path": ["admin", "students", "{{studentId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jordan Miles (updated)\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete student (soft)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/admin/students/{{studentId}}", "host": ["{{baseUrl}}"], "path": ["admin", "students", "{{studentId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Courses & Lessons",
+      "item": [
+        {
+          "name": "List courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length > 0) {",
+                  "    pm.collectionVariables.set('courseId', json.items[0].id);",
+                  "    if (json.items[0].lessons && json.items[0].lessons.length > 0) {",
+                  "        pm.collectionVariables.set('lessonId', json.items[0].lessons[0].id);",
+                  "    }",
+                  "    console.log('✓ courseId + lessonId saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/courses", "host": ["{{baseUrl}}"], "path": ["admin", "courses"] }
+          }
+        },
+        {
+          "name": "Create course",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/courses", "host": ["{{baseUrl}}"], "path": ["admin", "courses"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Course\",\n  \"description\": \"A test course\",\n  \"thumbnail\": \"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update course",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/courses/{{courseId}}", "host": ["{{baseUrl}}"], "path": ["admin", "courses", "{{courseId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete course",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/admin/courses/{{courseId}}", "host": ["{{baseUrl}}"], "path": ["admin", "courses", "{{courseId}}"] }
+          }
+        },
+        {
+          "name": "Create lesson",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/courses/{{courseId}}/lessons", "host": ["{{baseUrl}}"], "path": ["admin", "courses", "{{courseId}}", "lessons"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Lesson\",\n  \"description\": \"Lesson description\",\n  \"videoUrl\": \"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4\",\n  \"duration\": 600\n}"
+            }
+          }
+        },
+        {
+          "name": "Update lesson",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/courses/{{courseId}}/lessons", "host": ["{{baseUrl}}"], "path": ["admin", "courses", "{{courseId}}", "lessons"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lessonId\": \"{{lessonId}}\",\n  \"title\": \"Updated Lesson Title\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete lesson",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/admin/courses/{{courseId}}/lessons?lessonId={{lessonId}}",
+              "host": ["{{baseUrl}}"], "path": ["admin", "courses", "{{courseId}}", "lessons"],
+              "query": [{ "key": "lessonId", "value": "{{lessonId}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Enrollments",
+      "item": [
+        {
+          "name": "List enrollments (with progress)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/enrollments", "host": ["{{baseUrl}}"], "path": ["admin", "enrollments"] }
+          }
+        },
+        {
+          "name": "Bulk assign",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/enrollments", "host": ["{{baseUrl}}"], "path": ["admin", "enrollments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentIds\": [\"{{studentId}}\"],\n  \"courseIds\": [\"{{courseId}}\"]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Reports",
+      "item": [
+        {
+          "name": "Overview (dashboard)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/reports/overview", "host": ["{{baseUrl}}"], "path": ["admin", "reports", "overview"] }
+          }
+        },
+        {
+          "name": "Per-student report",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/reports/students/{{studentId}}", "host": ["{{baseUrl}}"], "path": ["admin", "reports", "students", "{{studentId}}"] }
+          }
+        },
+        {
+          "name": "Progress report (Part B)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/progress?page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["admin", "reports", "progress"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "from", "value": "2025-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Completions report (Part B)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/completions?page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["admin", "reports", "completions"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Time-spent report (Part B)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/time-spent?page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["admin", "reports", "time-spent"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Users (Part B)",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["admin", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "role", "value": "instructor", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.instructor@aaft.com\",\n  \"password\": \"Pass@123456\",\n  \"name\": \"New Instructor\",\n  \"role\": \"instructor\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update user (change role)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["admin", "users", "{{userId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"instructor\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Soft delete user",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/admin/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["admin", "users", "{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Course Runs (Part B)",
+      "item": [
+        {
+          "name": "List runs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length > 0) {",
+                  "    pm.collectionVariables.set('courseRunId', json.items[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/admin/course-runs", "host": ["{{baseUrl}}"], "path": ["admin", "course-runs"] }
+          }
+        },
+        {
+          "name": "Create run",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/course-runs", "host": ["{{baseUrl}}"], "path": ["admin", "course-runs"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"runName\": \"Q2 2026 Batch\",\n  \"startDate\": \"2026-04-01\",\n  \"endDate\": \"2026-06-30\",\n  \"enrollmentType\": \"free\",\n  \"passThreshold\": 60\n}"
+            }
+          }
+        },
+        {
+          "name": "Update run",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/course-runs/{{courseRunId}}", "host": ["{{baseUrl}}"], "path": ["admin", "course-runs", "{{courseRunId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"runName\": \"Q2 2026 Batch (renamed)\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Clone run",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/admin/course-runs/{{courseRunId}}/clone", "host": ["{{baseUrl}}"], "path": ["admin", "course-runs", "{{courseRunId}}", "clone"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"runName\": \"Q3 2026 Batch\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete run (blocks if enrolled)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/admin/course-runs/{{courseRunId}}", "host": ["{{baseUrl}}"], "path": ["admin", "course-runs", "{{courseRunId}}"] }
+          }
+        },
+        {
+          "name": "Publish course",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/admin/courses/{{courseId}}/publish", "host": ["{{baseUrl}}"], "path": ["admin", "courses", "{{courseId}}", "publish"] }
+          }
+        },
+        {
+          "name": "Archive course",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/admin/courses/{{courseId}}/archive", "host": ["{{baseUrl}}"], "path": ["admin", "courses", "{{courseId}}", "archive"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Instructor (Part B)",
+      "item": [
+        {
+          "name": "List own courses",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/instructor/courses", "host": ["{{baseUrl}}"], "path": ["instructor", "courses"] }
+          }
+        },
+        {
+          "name": "Create section",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/instructor/courses/{{courseId}}/sections", "host": ["{{baseUrl}}"], "path": ["instructor", "courses", "{{courseId}}", "sections"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Module 2: Advanced Topics\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create subsection",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/instructor/sections/SECTION_ID/subsections", "host": ["{{baseUrl}}"], "path": ["instructor", "sections", "SECTION_ID", "subsections"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Subsection 2.1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create unit (quiz type)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/instructor/subsections/SUBSECTION_ID/units", "host": ["{{baseUrl}}"], "path": ["instructor", "subsections", "SUBSECTION_ID", "units"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Module 1 Quiz\",\n  \"description\": \"Test your knowledge\",\n  \"type\": \"quiz\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create quiz",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/instructor/units/UNIT_ID/quiz", "host": ["{{baseUrl}}"], "path": ["instructor", "units", "UNIT_ID", "quiz"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Module 1 Quiz\",\n  \"passPercent\": 70,\n  \"maxAttempts\": 3\n}"
+            }
+          }
+        },
+        {
+          "name": "Create question",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/instructor/quizzes/{{quizId}}/questions", "host": ["{{baseUrl}}"], "path": ["instructor", "quizzes", "{{quizId}}", "questions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Which framing rule creates emotional emphasis?\",\n  \"type\": \"mcq_single\",\n  \"options\": [\n    { \"text\": \"Rule of thirds\", \"isCorrect\": true },\n    { \"text\": \"Center framing\", \"isCorrect\": false },\n    { \"text\": \"Random placement\", \"isCorrect\": false }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Run progress (for instructor's runs)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/instructor/course-runs/{{courseRunId}}/progress", "host": ["{{baseUrl}}"], "path": ["instructor", "course-runs", "{{courseRunId}}", "progress"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student",
+      "item": [
+        {
+          "name": "Enrolled courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length > 0) {",
+                  "    pm.collectionVariables.set('courseId', json.items[0].id);",
+                  "    if (json.items[0].lessons && json.items[0].lessons.length > 0) {",
+                  "        pm.collectionVariables.set('lessonId', json.items[0].lessons[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/student/courses?status=all",
+              "host": ["{{baseUrl}}"], "path": ["student", "courses"],
+              "query": [
+                { "key": "status", "value": "all", "description": "all | not_started | in_progress | completed" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Course detail + lessons",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/student/courses/{{courseId}}", "host": ["{{baseUrl}}"], "path": ["student", "courses", "{{courseId}}"] }
+          }
+        },
+        {
+          "name": "Update video progress (90% rule)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/student/progress", "host": ["{{baseUrl}}"], "path": ["student", "progress"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"videoId\": \"{{lessonId}}\",\n  \"courseId\": \"{{courseId}}\",\n  \"lastWatched\": 650,\n  \"percentage\": 92,\n  \"duration\": 720,\n  \"watchedSegments\": [[0, 650]]\n}"
+            }
+          }
+        },
+        {
+          "name": "Course progress",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/student/progress/{{courseId}}", "host": ["{{baseUrl}}"], "path": ["student", "progress", "{{courseId}}"] }
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/student/dashboard", "host": ["{{baseUrl}}"], "path": ["student", "dashboard"] }
+          }
+        },
+        {
+          "name": "Self-enroll (Part B)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/student/enroll", "host": ["{{baseUrl}}"], "path": ["student", "enroll"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseRunId\": \"{{courseRunId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "My enrollments (Part B)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length > 0) {",
+                  "    pm.collectionVariables.set('enrollmentId', json.items[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/student/enrollments", "host": ["{{baseUrl}}"], "path": ["student", "enrollments"] }
+          }
+        },
+        {
+          "name": "Enrollment content (Part B)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/student/enrollments/{{enrollmentId}}/content", "host": ["{{baseUrl}}"], "path": ["student", "enrollments", "{{enrollmentId}}", "content"] }
+          }
+        },
+        {
+          "name": "Submit quiz attempt (Part B)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/student/attempts", "host": ["{{baseUrl}}"], "path": ["student", "attempts"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quizId\": \"{{quizId}}\",\n  \"enrollmentId\": \"{{enrollmentId}}\",\n  \"answers\": {\n    \"QUESTION_ID_1\": [\"CORRECT_OPTION_ID_1\"]\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Grades (Part B)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/student/grades/{{enrollmentId}}", "host": ["{{baseUrl}}"], "path": ["student", "grades", "{{enrollmentId}}"] }
+          }
+        },
+        {
+          "name": "My certificates (Part B)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length > 0) {",
+                  "    pm.collectionVariables.set('certificateCode', json.items[0].verificationCode);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/student/certificates", "host": ["{{baseUrl}}"], "path": ["student", "certificates"] }
+          }
+        },
+        {
+          "name": "Unenroll (Part B)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/student/enrollments/{{enrollmentId}}", "host": ["{{baseUrl}}"], "path": ["student", "enrollments", "{{enrollmentId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Verify certificate (no auth)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/certificates/{{certificateCode}}", "host": ["{{baseUrl}}"], "path": ["certificates", "{{certificateCode}}"] }
+          }
+        },
+        {
+          "name": "Gateway health (no auth)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "http://localhost:3001/_health", "host": ["http://localhost:3001"], "path": ["_health"] }
+          }
+        }
+      ]
+    }
+  ]
+}
